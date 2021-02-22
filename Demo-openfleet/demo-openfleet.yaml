@@ -1,0 +1,424 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  OpenFleet Non HA Setup -  Demo Openfleet
+Mappings:
+  Constants:
+    AMI:
+      DefaultAMIId: ami-032e5b6af8a711f30
+      Frontend1: ami-032e5b6af8a711f30
+      RoutingServerAMI: ami-032e5b6af8a711f30
+      Mongo:  ami-032e5b6af8a711f30
+    Tags:
+      environment: Demo Openfleet
+Parameters:
+  FrontendRoutingInstanceType:
+    Type: String
+    Default: m5.xlarge
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+    Description: Enter the instance type for the application server. Default is t2.medium.
+  EngineInstanceType:
+    Type: String
+    Default: m5.large
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+    Description: Enter the instance type for the application server. Default is t2.medium.
+  MongoInstanceType:
+    Type: String
+    Default: m5.large
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+    Description: Enter the instance type for the application server. Default is t2.medium.
+  AvailabilityZone1:
+    Description: The first availability zones where the resources will be initiated
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    ConstraintDescription: 'Must be a valid availability zones. Ex: ap-southeast-2a'
+  AvailabilityZone2:
+    Description: The first availability zones where the resources will be initiated
+    Type: 'AWS::EC2::AvailabilityZone::Name'
+    ConstraintDescription: 'Must be a valid availability zones. Ex: ap-southeast-2a'
+  Environment:
+    Description: Enter the Environment
+    Type: String
+    ConstraintDescription: Must be a valid string.
+  PEMFileName:
+    Description: Enter the PEM file name
+    Type: String
+    Default: DCG-Staging
+    ConstraintDescription: Must be a valid string.
+Resources:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    DeletionPolicy: Retain
+    Properties:
+      CidrBlock: 192.168.0.0/20
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-VPC'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  PublicSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 192.168.1.0/24
+      AvailabilityZone: !Ref AvailabilityZone1
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-PublicSubnet1'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  PublicSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 192.168.2.0/24
+      AvailabilityZone: !Ref AvailabilityZone2
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-PublicSubnet2'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-InternetGateway'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  AttachGateway:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-PublicRouteTable'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  Route:
+    Type: 'AWS::EC2::Route'
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  SubnetPublicRouteTableAssociation1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  SubnetPublicRouteTableAssociation2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+  EIP:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: VPC
+  EIPAssoc:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref 'FrontendInstance1'
+      EIP: !Ref 'EIP'
+  FrontendInstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 192.168.0.0/20
+        - IpProtocol: tcp
+          FromPort: 26379
+          ToPort: 26379
+          CidrIp: 192.168.0.0/20
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-FrontendInstanceSecurityGroup'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  EngineInstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8500
+          ToPort: 8599
+          CidrIp: 192.168.1.0/24
+          Description: Frontend to Engines
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+          Description: Loqus Ssh
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-EngineInstanceSecurityGroup'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  MongoInstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 192.168.1.0/24
+          Description: Internal Access to Mongo ZoneA
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+          Description: Loqus Ssh
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 195.158.91.22/32
+          Description: Loqus to Mongo
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-MongoInstanceSecurityGroup'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  FrontendInstance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - Frontend1
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - !Ref FrontendInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet1
+          PrivateIpAddress: 192.168.1.11
+      InstanceType: !Ref FrontendRoutingInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-Frontend-1-A'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  EngineServer1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - !Ref EngineInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet1
+          PrivateIpAddress: 192.168.1.21
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-Engine-1-A'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  MongoInstance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 500
+            VolumeType: gp2
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - Mongo
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - !Ref MongoInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet1
+          PrivateIpAddress: 192.168.1.50
+      InstanceType: !Ref MongoInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-Mongo-1-A'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+Outputs:
+  Frontend1PrivateIp:
+    Value: !GetAtt 
+      - FrontendInstance1
+      - PrivateIp
+    Description: PrivateIp of the FrontendInstance1
+  Mongo1PrivateIp:
+    Value: !GetAtt 
+      - MongoInstance1
+      - PrivateIp
+    Description: PrivateIp of the MongoInstance1
+  FrontendInstanceSecurityGroup:
+    Value: !GetAtt
+      - FrontendInstanceSecurityGroup
+      - GroupId
+  Frontend1PublicIp:
+    Value: !GetAtt 
+      - FrontendInstance1
+      - PublicIp
+    Description: PublicIp of the FrontendInstance1
+  Engine1PublicIp:
+    Value: !GetAtt 
+      - EngineServer1
+      - PublicIp
+    Description: PublicIp of the EngineServer1
+  Mongo1PublicIp:
+    Value: !GetAtt 
+      - MongoInstance1
+      - PublicIp
+    Description: PublicIp of the MongoInstance1
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}-VPC
