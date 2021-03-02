@@ -1,0 +1,407 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  DCG - Openfleet Base Setup  - SLS / UAT / Training 
+Mappings:
+  CidrBlock: 
+    UAT: 
+      VPC: 192.168.0.0/20
+      Subnet1: 192.168.1.0/24
+      Subnet2: 192.168.2.0/24
+      Subnet3: 192.168.3.0/24
+      SLSSubnet1: 192.168.4.0/24
+      SLSSubnet2: 192.168.5.0/24
+      SLSSubnet3: 192.168.6.0/24
+    Training: 
+      VPC: 192.168.0.0/20
+      Subnet1: 192.168.1.0/24
+      Subnet2: 192.168.2.0/24
+      Subnet3: 192.168.3.0/24
+      SLSSubnet1: 192.168.4.0/24
+      SLSSubnet2: 192.168.5.0/24
+      SLSSubnet3: 192.168.6.0/24
+Parameters:
+  AvailabilityZone1:
+    Description: The first availability zones where the resources will be initiated
+    Type: "AWS::EC2::AvailabilityZone::Name"
+    ConstraintDescription: "Must be a valid availability zones. Ex: ap-southeast-2a"
+  AvailabilityZone2:
+    Description: The first availability zones where the resources will be initiated
+    Type: "AWS::EC2::AvailabilityZone::Name"
+    ConstraintDescription: "Must be a valid availability zones. Ex: ap-southeast-2b"
+  AvailabilityZone3:
+    Description: The first availability zones where the resources will be initiated
+    Type: "AWS::EC2::AvailabilityZone::Name"
+    ConstraintDescription: "Must be a valid availability zones. Ex: ap-southeast-2c"
+  Environment:
+    Description: Enter the Environment
+    Type: String
+    Default: ClientName
+    ConstraintDescription: Must be a valid string. - Client Name
+  PEMFileName:
+    Description: Enter the PEM file name
+    Type: String
+    Default: UAT
+    ConstraintDescription: Must be a valid string.
+  StageName:
+    Description: Stage Name  - eg. sit / dev / training
+    Type: String
+    Default: UAT
+    AllowedValues:
+      - Development
+      - Training
+      - SIT
+      - Staging
+      - UAT
+    Description: Enter Stage Name.
+Resources:
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, VPC]
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-VPC
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName} 
+  SLSSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, SLSSubnet1]
+      AvailabilityZone: !Ref AvailabilityZone1
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-SLSSubnet1
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  SLSSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, SLSSubnet2]
+      AvailabilityZone: !Ref AvailabilityZone2
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-SLSSubnet2
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  SLSSubnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, SLSSubnet3]
+      AvailabilityZone: !Ref AvailabilityZone3
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-SLSSubnet3
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  Subnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, Subnet1]
+      AvailabilityZone: !Ref AvailabilityZone1
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-Subnet1
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  Subnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, Subnet2]
+      AvailabilityZone: !Ref AvailabilityZone2
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-Subnet2
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  Subnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, Subnet3]
+      AvailabilityZone: !Ref AvailabilityZone3
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-Subnet3
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-InternetGateway
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  AttachGateway:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTableInternetGateway:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-InternetGateway
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  PublicRouteTableNatGateway:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-NATGateway
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  RouteNG:
+    Type: "AWS::EC2::Route"
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTableNatGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway
+  RouteIG:
+    Type: "AWS::EC2::Route"
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTableInternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  EIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-EIP-NAT-Proxy
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  NATGateway:
+    DependsOn: AttachGateway
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt
+        - EIP
+        - AllocationId
+      SubnetId: !Ref Subnet1 
+      Tags:
+        - Key: Name
+          Value: !Join
+            - ""
+            - - !Ref Environment
+              - "-NATGateway"
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  SubnetPublicRouteTableAssociation1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref Subnet1
+      RouteTableId: !Ref PublicRouteTableInternetGateway
+  SubnetPublicRouteTableAssociation2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref Subnet2
+      RouteTableId: !Ref PublicRouteTableInternetGateway
+  SubnetPublicRouteTableAssociation3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref Subnet3
+      RouteTableId: !Ref PublicRouteTableInternetGateway
+  SubnetPublicRouteTableAssociationSLS1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref SLSSubnet1
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SubnetPublicRouteTableAssociationSLS2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref SLSSubnet2
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SubnetPublicRouteTableAssociationSLS3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref SLSSubnet3
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SLSSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+          Description: Loqus Ssh
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-SLSSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  FrontendSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+          Description: SSH from Loqus VPN
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 108.128.19.87/32
+          Description: SSH from Loqus VPN AWS DEV acc 
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 195.158.91.22/32
+          Description: Loqus Mongo Access
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 195.158.91.22/32
+          Description: Http worldwide access
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-MongoSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  MongoSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 195.158.91.22/32
+          Description: SSH from loqus VPN
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 108.128.19.87/32
+          Description: SSH from loqus VPN-AWS DEV-Account
+        - IpProtocol: tcp
+          FromPort: 27017
+          ToPort: 27017
+          CidrIp: 192.168.0.0/20
+          Description: Mongo allow from VPC
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+          Description: Loqus Mongo Access
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-MongoSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  EngineSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+          Description: SSH from loqus VPN
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 108.128.19.87/32
+          Description: SSH from loqus VPN-AWS DEV-Account
+        - IpProtocol: tcp
+          FromPort: 8500
+          ToPort: 8599
+          CidrIp: 192.168.0.0/20
+          Description: Mongo allow from VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-EngineSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  FrontendLoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Internet facing LoadBalancer security group
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 80
+          IpProtocol: tcp
+          ToPort: 80
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-FrontendSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  ParameterOne:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /of-pro/${StageName}/sls/security-group-id
+      Type: String
+      Value: !Ref SLSSecurityGroup
+      Description: SLSSecurityGroup
+  ParameterTwo:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /of-pro/${StageName}/sls/subnet-ids
+      Type: String
+      Value: !Join
+      - ","
+      - - !Ref "SLSSubnet1"
+        - !Ref "SLSSubnet2"
+        - !Ref "SLSSubnet3" 
+Outputs:
+  FrontendSecurityGroup:
+    Value: !Ref FrontendSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-FrontendSecurityID
+  EngineSecurityGroup:
+    Value: !Ref EngineSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-EngineSecurityID
+  MongoSecurityGroup:
+    Value: !Ref MongoSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-MongoSecurityID
+  SLSSecurityGroup:
+    Value: !Ref SLSSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-SLSSecurityID
+  Subnet1:
+   Value: !Ref Subnet1
+   Export:
+      Name: !Sub ${AWS::StackName}-Subnet1ID
+  Subnet2:
+   Value: !Ref Subnet2
+   Export:
+      Name: !Sub ${AWS::StackName}-Subnet2ID
+  SLSSubnets:
+    Value: !Join
+      - ","
+      - - !Ref "SLSSubnet1"
+        - !Ref "SLSSubnet2"
+    Export:
+      Name: !Sub ${AWS::StackName}-SLSSubnetIDs
+  FrontendLoadBalancerSecurityGroup:
+    Value: !Ref FrontendLoadBalancerSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-FrontendLoadBalancerSecurityGroupID
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}-VPC
