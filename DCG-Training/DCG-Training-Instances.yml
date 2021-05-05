@@ -85,7 +85,7 @@ Resources:
       Domain: VPC
       Tags:
         - Key: Name
-          Value: !Sub ${BaseStackName}-EIP-LoabBalancer
+          Value: !Sub ${BaseStackName}-EIP-Frontend1
         - Key: Environment
           Value: !Sub ${BaseStackName}
   EIPAssoc:
@@ -93,6 +93,20 @@ Resources:
     Properties:
       InstanceId: !Ref 'FrontendInstance1'
       EIP: !Ref 'EIP'
+  EIP2:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-EIP-Frontend2
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  EIPAssoc2:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref 'FrontendInstance2'
+      EIP: !Ref 'EIP2'
   FrontendLoadBalancer:
     Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
     Properties:

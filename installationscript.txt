@@ -1,0 +1,64 @@
+sudo yum update -y
+sudo yum install httpd -y
+sudo systemctl enable httpd
+sudo yum install git -y
+sudo yum install redis -y
+sudo systemctl start redis
+sudo systemctl enable redis
+
+sudo mkdir -m 755 -p /opt/apps
+sudo chown loqus:loqus /opt/apps/
+sudo yum install -y nodejs
+sudo npm install pm2@latest -g   
+	sudo npm i -g pm2 
+echo "PATH=\$PATH:`npm config get prefix`/bin" >> ~/.bashrc
+source ~/.bashrc
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:retain 7
+
+sudo yum install -y python2
+sudo yum install -y make
+Redis  - remove enforce and listen 0.0.0.0
+sysctl vm.overcommit_memory=1
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+
+
+/opt/apps/openfleet-ui-order-tracking-v2/build
+
+
+sudo yum update -y
+sudo yum install httpd -y
+sudo systemctl enable httpd
+sudo yum install -y redis
+sudo systemctl enable redis
+sudo systemctl start redis
+sudo yum install -y python3
+sudo yum install -y bzip2
+sudo yum install -y fontconfig 
+sudo yum install -y make
+sudo yum install git -y
+sudo useradd loqus
+sudo mkdir -p /opt/apps -m 755
+sudo chown loqus:loqus /opt/apps/
+sudo yum install -y nodejs
+sudo systemctl enable httpd
+sudo systemctl start httpd
+sudo echo "loqus        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
+sudo su loqus
+cd /home/loqus/
+echo "PATH=\$PATH:`npm config get prefix`/bin" >> ~/.bashrc
+source ~/.bashrc
+cd /home/loqus/
+sudo npm install pm2@latest -g 
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:retain 7
+sudo sysctl vm.overcommit_memory=1
+sudo echo never > /sys/kernel/mm/transparent_hugepage/enabled
+echo "//npm.pkg.github.com/:_authToken=123b2254b5a7757f50c57f42d1840f97df8180eb@loqusgroup:registry=https://npm.pkg.github.com always-auth=false" >> /home/loqus/.npmrc
+setsebool -P httpd_can_network_connect=1
+
+
+yum install gcc-c++
+sudo sed -i 's/^SELINUX=.*/SELINUX=permissive/g' /etc/selinux/config
+
+

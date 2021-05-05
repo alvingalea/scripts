@@ -1,0 +1,1808 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: DCG-PROD CloudWatch Alarms - CPU, Memory,Disk & Instance Status
+#------------------------------------------------------------------------------
+Parameters:
+#----------------------------FrontEnds--Instance-ID-----------------------------
+  InstanceID:
+    Description: "Please enter Instance ID For FrontEnd 1"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDF2:
+    Description: "Please enter Instance ID For FrontEnd 2"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDF3:
+    Description: "Please enter Instance ID For FrontEnd 3"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDD1:
+    Description: "Please enter Instance ID For Dispatch 1"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDD2:
+    Description: "Please enter Instance ID For Dispatch 2"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDD3:
+    Description: "Please enter Instance ID For Dispatch 3"
+    Type: AWS::EC2::Instance::Id
+#----------------------------Engines----Instance-ID-----------------------------
+  InstanceIDE1:
+    Description: "Please enter Instance ID For Engine 1"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE2:
+    Description: "Please enter Instance ID For Engine 2"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE3:
+    Description: "Please enter Instance ID For Engine 3"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE4:
+    Description: "Please enter Instance ID For Engine 4"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE5:
+    Description: "Please enter Instance ID For Engine 5"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE6:
+    Description: "Please enter Instance ID For Engine 6"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE7:
+    Description: "Please enter Instance ID For Engine 7"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE8:
+    Description: "Please enter Instance ID For Engine 8"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE9:
+    Description: "Please enter Instance ID For Engine 9"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE10:
+    Description: "Please enter Instance ID For Engine 10"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE11:
+    Description: "Please enter Instance ID For Engine 11"
+    Type: AWS::EC2::Instance::Id
+  InstanceIDE12:
+    Description: "Please enter Instance ID For Engine 12"
+    Type: AWS::EC2::Instance::Id
+
+#----------------------------FrontEnds--Instance-Name---------------------------
+  InstanceName:
+    Description: "Please enter Instance Name For FrontEnd 1"
+    Type: "String"
+  InstanceNameF2:
+    Description: "Please enter Instance Name For FrontEnd 2"
+    Type: "String"
+  InstanceNameF3:
+    Description: "Please enter Instance Name For FrontEnd 3"
+    Type: "String"
+  InstanceNameD1:
+    Description: "Please enter Instance Name For Dispatch 1"
+    Type: "String"
+  InstanceNameD2:
+    Description: "Please enter Instance Name For Dispatch 2"
+    Type: "String"
+  InstanceNameD3:
+    Description: "Please enter Instance Name For Dispatch 3"
+    Type: "String"
+#----------------------------Engines----Instance-Name---------------------------
+  InstanceNameE1:
+    Description: "Please enter Instance Name For Engine 1"
+    Type: "String"
+  InstanceNameE2:
+    Description: "Please enter Instance Name For Engine 2"
+    Type: "String"
+  InstanceNameE3:
+    Description: "Please enter Instance Name For Engine 3"
+    Type: "String"
+  InstanceNameE4:
+    Description: "Please enter Instance Name For Engine 4"
+    Type: "String"
+  InstanceNameE5:
+    Description: "Please enter Instance Name For Engine 5"
+    Type: "String"
+  InstanceNameE6:
+    Description: "Please enter Instance Name For Engine 6"
+    Type: "String"
+  InstanceNameE7:
+    Description: "Please enter Instance Name For Engine 7"
+    Type: "String"
+  InstanceNameE8:
+    Description: "Please enter Instance Name For Engine 8"
+    Type: "String"
+  InstanceNameE9:
+    Description: "Please enter Instance Name For Engine 9"
+    Type: "String"
+  InstanceNameE10:
+    Description: "Please enter Instance Name For Engine 10"
+    Type: "String"
+  InstanceNameE11:
+    Description: "Please enter Instance Name For Engine 11"
+    Type: "String"
+  InstanceNameE12:
+    Description: "Please enter Instance Name For Engine 12"
+    Type: "String"
+
+#----------------------------ARNs--& AMIs---------------------------------------
+
+  AlertARN:
+    Description: "Please enter ARN for SNS"
+    Type: "String"
+   
+  FrontEndAMI:
+    Description: "Please enter FrontEnd AMI"
+    Type: "String"
+
+  EngineAMI:
+    Description: "Please enter Engine AMI"
+    Type: "String"
+#----------------------------Instance-Sizes-------------------------------------
+  InstanceSize:
+    Description: "Instance Size"
+    Type: "String"
+    Default: m5.xlarge
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+
+Resources:
+#----------------------------FrontEnd1-CPU--------------------------------------
+  CPUAlarmFrontEnd1: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceName, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceName, !Ref InstanceID, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceID
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------FrontEnd1-Memory-----------------------------------
+  MemoryAlarmFrontEnd1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceName, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceName, !Ref InstanceID, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceID
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------FrontEnd1-Disk-------------------------------------
+  DiskAlarmFrontEnd1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceName, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceName, !Ref InstanceID, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceID
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------FrontEnd1-Failed-----------------------------------
+  InstanceStatusAlarmFrontEnd1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceName, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceName, !Ref InstanceID, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceID
+#----------------------------FrontEnd2-CPU--------------------------------------
+  CPUAlarmFrontEnd2: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameF2, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameF2, !Ref InstanceIDF2, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDF2
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------FrontEnd2-Memory-----------------------------------
+  MemoryAlarmFrontEnd2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameF2, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameF2, !Ref InstanceIDF2, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDF2
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------FrontEnd2-Disk-------------------------------------
+  DiskAlarmFrontEnd2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameF2, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameF2, !Ref InstanceIDF2, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDF2
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------FrontEnd2-Failed-----------------------------------
+  InstanceStatusAlarmFrontEnd2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameF2, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameF2, !Ref InstanceIDF2, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDF2
+#----------------------------FrontEnd3-CPU--------------------------------------
+  CPUAlarmFrontEnd3: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameF3, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameF3, !Ref InstanceIDF3, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDF3
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------FrontEnd3-Memory-----------------------------------
+  MemoryAlarmFrontEnd3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameF3, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameF3, !Ref InstanceIDF3, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDF3
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------FrontEnd3-Disk-------------------------------------
+  DiskAlarmFrontEnd3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameF3, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameF3, !Ref InstanceIDF3, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDF3
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------FrontEnd3-Failed-----------------------------------
+  InstanceStatusAlarmFrontEnd3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameF3, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameF3, !Ref InstanceIDF3, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDF3
+#----------------------------Dispatch1-CPU--------------------------------------
+  CPUAlarmDispatch1: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD1, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD1, !Ref InstanceIDD1, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD1
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Dispatch1-Memory-----------------------------------
+  MemoryAlarmDispatch1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD1, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD1, !Ref InstanceIDD1, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD1
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Dispatch1-Disk-------------------------------------
+  DiskAlarmDispatch1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD1, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD1, !Ref InstanceIDD1, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD1
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Dispatch1-Failed-----------------------------------
+  InstanceStatusAlarmDispatch1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD1, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD1, !Ref InstanceIDD1, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD1
+#----------------------------Dispatch2-CPU--------------------------------------
+  CPUAlarmDispatch2: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD2, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD2, !Ref InstanceIDD2, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD2
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Dispatch2-Memory-----------------------------------
+  MemoryAlarmDispatch2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD2, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD2, !Ref InstanceIDD2, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD2
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Dispatch2-Disk-------------------------------------
+  DiskAlarmDispatch2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD2, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD2, !Ref InstanceIDD2, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD2
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Dispatch2-Failed-----------------------------------
+  InstanceStatusAlarmDispatch2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD2, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD2, !Ref InstanceIDD2, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD2
+#----------------------------Dispatch3-CPU--------------------------------------
+  CPUAlarmDispatch3: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD3, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD3, !Ref InstanceIDD3, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD3
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Dispatch3-Memory-----------------------------------
+  MemoryAlarmDispatch3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD3, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD3, !Ref InstanceIDD3, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD3
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Dispatch3-Disk-------------------------------------
+  DiskAlarmDispatch3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD3, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD3, !Ref InstanceIDD3, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD3
+      - Name: ImageId
+        Value: !Ref FrontEndAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Dispatch3-Failed-----------------------------------
+  InstanceStatusAlarmDispatch3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameD3, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameD3, !Ref InstanceIDD3, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDD3
+#----------------------------Engine1-CPU----------------------------------------
+  CPUAlarmEngine1: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE1, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE1, !Ref InstanceIDE1, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE1
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine1-Memory-------------------------------------
+  MemoryAlarmEngine1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE1, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE1, !Ref InstanceIDE1, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE1
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine1-Disk---------------------------------------
+  DiskAlarmEngine1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE1, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE1, !Ref InstanceIDE1, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE1
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine1-Failed-------------------------------------
+  InstanceStatusAlarmEngine1:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE1, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE1, !Ref InstanceIDE1, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE1
+#----------------------------Engine2-CPU----------------------------------------
+  CPUAlarmEngine2: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE2, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE2, !Ref InstanceIDE2, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE2
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine2-Memory-------------------------------------
+  MemoryAlarmEngine2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE2, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE2, !Ref InstanceIDE2, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE2
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine2-Disk---------------------------------------
+  DiskAlarmEngine2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE2, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE2, !Ref InstanceIDE2, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE2
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine2-Failed-------------------------------------
+  InstanceStatusAlarmEngine2:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE2, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE2, !Ref InstanceIDE2, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE2
+#----------------------------Engine3-CPU----------------------------------------
+  CPUAlarmEngine3: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE3, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE3, !Ref InstanceIDE3, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE3
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine3-Memory ------------------------------------
+  MemoryAlarmEngine3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE3, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE3, !Ref InstanceIDE3, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE3
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine3-Disk---------------------------------------
+  DiskAlarmEngine3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE3, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE3, !Ref InstanceIDE3, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE3
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine3-Failed-------------------------------------
+  InstanceStatusAlarmEngine3:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE3, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE3, !Ref InstanceIDE3, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE3
+#----------------------------Engine4-CPU----------------------------------------
+  CPUAlarmEngine4: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE4, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE4, !Ref InstanceIDE4, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE4
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine4-Memory-------------------------------------
+  MemoryAlarmEngine4:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE4, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE4, !Ref InstanceIDE4, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE4
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine4-Disk---------------------------------------
+  DiskAlarmEngine4:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE4, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE4, !Ref InstanceIDE4, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE4
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine4-Failed-------------------------------------
+  InstanceStatusAlarmEngine4:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE4, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE4, !Ref InstanceIDE4, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE4
+#----------------------------Engine5-CPU----------------------------------------
+  CPUAlarmEngine5: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE5, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE5, !Ref InstanceIDE5, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE5
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine5-Memory-------------------------------------
+  MemoryAlarmEngine5:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE5, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE5, !Ref InstanceIDE5, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE5
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine5-Disk---------------------------------------
+  DiskAlarmEngine5:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE5, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE5, !Ref InstanceIDE5, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE5
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine5-Failed-------------------------------------
+  InstanceStatusAlarmEngine5:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE5, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE5, !Ref InstanceIDE5, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE5
+#----------------------------Engine6-CPU----------------------------------------
+  CPUAlarmEngine6: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE6, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE6, !Ref InstanceIDE6, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE6
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine6-Memory-------------------------------------
+  MemoryAlarmEngine6:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE6, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE6, !Ref InstanceIDE6, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE6
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine6-Disk---------------------------------------
+  DiskAlarmEngine6:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE6, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE6, !Ref InstanceIDE6, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE6
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine6-Failed-------------------------------------
+  InstanceStatusAlarmEngine6:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE6, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE6, !Ref InstanceIDE6, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE6
+#----------------------------Engine7-CPU----------------------------------------
+  CPUAlarmEngine7: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE7, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE7, !Ref InstanceIDE7, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE7
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine7-Memory-------------------------------------
+  MemoryAlarmEngine7:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE7, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE7, !Ref InstanceIDE7, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE7
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine7-Disk---------------------------------------
+  DiskAlarmEngine7:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE7, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE7, !Ref InstanceIDE7, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE7
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine7-Failed-------------------------------------
+  InstanceStatusAlarmEngine7:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE7, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE7, !Ref InstanceIDE7, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE7
+#----------------------------Engine8-CPU----------------------------------------
+  CPUAlarmEngine8: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE8, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE8, !Ref InstanceIDE8, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE8
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine8-Memory-------------------------------------
+  MemoryAlarmEngine8:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE8, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE8, !Ref InstanceIDE8, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE8
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine8-Disk---------------------------------------
+  DiskAlarmEngine8:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE8, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE8, !Ref InstanceIDE8, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE8
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine8-Failed-------------------------------------
+  InstanceStatusAlarmEngine8:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE8, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE8, !Ref InstanceIDE8, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE8
+#----------------------------Engine9-CPU----------------------------------------
+  CPUAlarmEngine9: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE9, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE9, !Ref InstanceIDE9, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE9
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine9-Memory-------------------------------------
+  MemoryAlarmEngine9:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE9, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE9, !Ref InstanceIDE9, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE9
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine9-Disk---------------------------------------
+  DiskAlarmEngine9:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE9, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE9, !Ref InstanceIDE9, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE9
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine9-Failed-------------------------------------
+  InstanceStatusAlarmEngine9:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE9, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE9, !Ref InstanceIDE9, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE9
+#----------------------------Engine10-CPU---------------------------------------
+  CPUAlarmEngine10: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE10, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE10, !Ref InstanceIDE10, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE10
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine10-Memory------------------------------------
+  MemoryAlarmEngine10:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE10, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE10, !Ref InstanceIDE10, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE10
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine10-Disk--------------------------------------
+  DiskAlarmEngine10:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE10, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE10, !Ref InstanceIDE10, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE10
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine10-Failed------------------------------------
+  InstanceStatusAlarmEngine10:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE10, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE10, !Ref InstanceIDE10, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE10
+#----------------------------Engine11-CPU---------------------------------------
+  CPUAlarmEngine11: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE11, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE11, !Ref InstanceIDE11, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE11
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine11-Memory------------------------------------
+  MemoryAlarmEngine11:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE11, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE11, !Ref InstanceIDE11, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE11
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine11-Disk--------------------------------------
+  DiskAlarmEngine11:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE11, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE11, !Ref InstanceIDE11, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE11
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine11-Failed------------------------------------
+  InstanceStatusAlarmEngine11:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE11, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE11, !Ref InstanceIDE11, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE11
+#----------------------------Engine12-CPU---------------------------------------
+  CPUAlarmEngine12: 
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE12, CPU Above 85%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE12, !Ref InstanceIDE12, CPU Above 85%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: cpu_usage_active
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 85
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE12
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: cpu
+        Value: cpu-total
+#----------------------------Engine12-Memory------------------------------------
+  MemoryAlarmEngine12:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE12, Memory Above 95%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE12, !Ref InstanceIDE12, Memory Above 95%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: mem_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE12
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+#----------------------------Engine12-Disk--------------------------------------
+  DiskAlarmEngine12:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE12, Disk Above 50%] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE12, !Ref InstanceIDE12, Disk Above 50%] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: disk_used_percent
+      Namespace: CWAgent
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 50
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE12
+      - Name: ImageId
+        Value: !Ref EngineAMI
+      - Name: InstanceType
+        Value: !Ref InstanceSize
+      - Name: path
+        Value: /
+      - Name: device
+        Value: nvme0n1p2
+      - Name: fstype
+        Value: xfs
+#----------------------------Engine12-Failed------------------------------------
+  InstanceStatusAlarmEngine12:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Join [ ' ', [!Ref InstanceNameE12, Failed (Any)] ]
+      AlarmDescription: !Join [ ' ', [!Ref InstanceNameE12, !Ref InstanceIDE12, Failed (Any)] ]
+      AlarmActions: 
+      - !Ref AlertARN
+      MetricName: StatusCheckFailed_Instance
+      Namespace: AWS/EC2
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 95
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref InstanceIDE12

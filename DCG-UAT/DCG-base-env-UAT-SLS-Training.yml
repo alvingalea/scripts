@@ -256,13 +256,13 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: 195.158.91.22/32
-          Description: Loqus Mongo Access
+          CidrIp: 0.0.0.0/0
+          Description: Http worldwide access
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: 195.158.91.22/32
-          Description: Http worldwide access
+          CidrIp: 0.0.0.0/0
+          Description: Https worldwide access
       Tags:
         - Key: Name
           Value: !Sub ${Environment}-${StageName}-MongoSecurityGroup

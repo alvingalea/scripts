@@ -1,15 +1,15 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
-  OpenFleet Non HA Setup -  Demo
+  OpenFleet Non HA Setup -  DPD 
 Mappings:
   Constants:
     AMI:
-      DefaultAMIId: ami-032e5b6af8a711f30
-      Frontend1: ami-032e5b6af8a711f30
-      RoutingServerAMI: ami-032e5b6af8a711f30
-      Mongo:  ami-032e5b6af8a711f30
+      DefaultAMIId: ami-07dfba995513840b5
+      Frontend1: ami-07dfba995513840b5
+      RoutingServerAMI: ami-0484239e2655873b6
+      Mongo:  ami-0b580acbc8ae97308
     Tags:
-      environment: Demo
+      environment: DPD
 Parameters:
   FrontendRoutingInstanceType:
     Type: String
@@ -31,7 +31,7 @@ Parameters:
     Description: Enter the instance type for the application server. Default is t2.medium.
   EngineInstanceType:
     Type: String
-    Default: m5.large
+    Default: m5.xlarge
     AllowedValues:
       - t2.micro
       - t2.small
@@ -83,7 +83,23 @@ Parameters:
     Default: DCG-Staging
     ConstraintDescription: Must be a valid string.
 Resources:
-  DemoSubnet1:
+  VPC:
+    Type: 'AWS::EC2::VPC'
+    DeletionPolicy: Retain
+    Properties:
+      CidrBlock: 192.168.0.0/20
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-VPC'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  PublicSubnet1:
     Type: 'AWS::EC2::Subnet'
     Properties:
       VpcId: !Ref VPC
@@ -103,15 +119,15 @@ Resources:
   PublicSubnet2:
     Type: 'AWS::EC2::Subnet'
     Properties:
-      VpcId: vpc-41fdc525
-      CidrBlock: 172.17.1.0/27
-      AvailabilityZone: !Ref AvailabilityZone1
+      VpcId: !Ref VPC
+      CidrBlock: 192.168.2.0/24
+      AvailabilityZone: !Ref AvailabilityZone2
       Tags:
         - Key: Name
           Value: !Join 
             - ''
             - - !Ref Environment
-              - '-PublicSubnet1'
+              - '-PublicSubnet2'
         - Key: Environment
           Value: !FindInMap 
             - Constants
@@ -202,6 +218,16 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet2
       RouteTableId: !Ref PublicRouteTable
+  SubnetPublicRouteTableAssociationSLS1:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SLSSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  SubnetPublicRouteTableAssociationSLS2:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref SLSSubnet2
+      RouteTableId: !Ref PublicRouteTable
   EIP:
     Type: 'AWS::EC2::EIP'
     Properties:
@@ -233,6 +259,10 @@ Resources:
           FromPort: 26379
           ToPort: 26379
           CidrIp: 192.168.0.0/20
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Join 
@@ -307,13 +337,8 @@ Resources:
         - IpProtocol: tcp
           FromPort: 27017
           ToPort: 27017
-          CidrIp: 192.168.1.0/24
-          Description: Internal Access to Mongo ZoneA
-        - IpProtocol: tcp
-          FromPort: 27017
-          ToPort: 27017
-          CidrIp: 192.168.2.0/24
-          Description: Internal Access to Mongo ZoneB
+          CidrIp: 192.168.0.0/20
+          Description: Internal Access to Mongo from VPC
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
@@ -399,6 +424,176 @@ Resources:
             - ''
             - - !Ref Environment
               - '-Engine-1-A'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  EngineServer2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - !Ref EngineInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet1
+          PrivateIpAddress: 192.168.1.22
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-Engine-2-A'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  EngineServer3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - !Ref EngineInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet1
+          PrivateIpAddress: 192.168.1.23
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-Engine-3-A'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  EngineServer4:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - !Ref EngineInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet1
+          PrivateIpAddress: 192.168.1.24
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-Engine-4-A'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  EngineServer5:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - !Ref EngineInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet1
+          PrivateIpAddress: 192.168.1.25
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-Engine-5-A'
+        - Key: Environment
+          Value: !FindInMap 
+            - Constants
+            - Tags
+            - environment
+  EngineServer6:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - !Ref EngineInstanceSecurityGroup
+          SubnetId: !Ref PublicSubnet1
+          PrivateIpAddress: 192.168.1.26
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ''
+            - - !Ref Environment
+              - '-Engine-6-A'
         - Key: Environment
           Value: !FindInMap 
             - Constants
