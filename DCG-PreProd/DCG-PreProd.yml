@@ -1,0 +1,929 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  DCG - Openfleet Base Setup  - Prod / PreProd / SLS 
+Mappings:
+  CidrBlock: 
+    PreProd: 
+      VPC: 192.168.0.0/19
+      Subnet1: 192.168.1.0/24
+      Subnet2: 192.168.2.0/24
+      Subnet3: 192.168.3.0/24
+      SLSSubnet1: 192.168.4.0/24
+      SLSSubnet2: 192.168.5.0/24
+      SLSSubnet3: 192.168.6.0/24
+      FrontendSubnet1: 192.168.11.0/24
+      FrontendSubnet2: 192.168.12.0/24
+      FrontendSubnet3: 192.168.13.0/24
+      EngineSubnet1: 192.168.14.0/24
+      EngineSubnet2: 192.168.15.0/24
+      EngineSubnet3: 192.168.16.0/24
+    Training: 
+      VPC: 192.168.0.0/20
+      Subnet1: 192.168.1.0/24
+      Subnet2: 192.168.2.0/24
+      Subnet3: 192.168.3.0/24
+      SLSSubnet1: 192.168.4.0/24
+      SLSSubnet2: 192.168.5.0/24
+      SLSSubnet3: 192.168.6.0/24
+Parameters:
+  AvailabilityZone1:
+    Description: The first availability zones where the resources will be initiated
+    Type: "AWS::EC2::AvailabilityZone::Name"
+    ConstraintDescription: "Must be a valid availability zones. Ex: ap-southeast-2a"
+  AvailabilityZone2:
+    Description: The first availability zones where the resources will be initiated
+    Type: "AWS::EC2::AvailabilityZone::Name"
+    ConstraintDescription: "Must be a valid availability zones. Ex: ap-southeast-2b"
+  AvailabilityZone3:
+    Description: The first availability zones where the resources will be initiated
+    Type: "AWS::EC2::AvailabilityZone::Name"
+    ConstraintDescription: "Must be a valid availability zones. Ex: ap-southeast-2c"
+  Environment:
+    Description: Enter the Environment
+    Type: String
+    Default: ClientName
+    ConstraintDescription: Must be a valid string. - Client Name
+  PEMFileName:
+    Description: Enter the PEM file name
+    Type: String
+    Default: PreProd
+    ConstraintDescription: Must be a valid string.
+  StageName:
+    Description: Stage Name  - eg. sit / dev / training / PreProd
+    Type: String
+    Default: PreProd
+    AllowedValues:
+      - PreProd
+    Description: Enter Stage Name.
+Resources:
+  VPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, VPC]
+      EnableDnsSupport: 'true'
+      EnableDnsHostnames: 'true'
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-VPC
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName} 
+  SLSSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, SLSSubnet1]
+      AvailabilityZone: !Ref AvailabilityZone1
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-SLSSubnet1
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  SLSSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, SLSSubnet2]
+      AvailabilityZone: !Ref AvailabilityZone2
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-SLSSubnet2
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  SLSSubnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, SLSSubnet3]
+      AvailabilityZone: !Ref AvailabilityZone3
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-SLSSubnet3
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  Subnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, Subnet1]
+      AvailabilityZone: !Ref AvailabilityZone1
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-Subnet1
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  Subnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, Subnet2]
+      AvailabilityZone: !Ref AvailabilityZone2
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-Subnet2
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  Subnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, Subnet3]
+      AvailabilityZone: !Ref AvailabilityZone3
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-Subnet3
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  FrontendSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, FrontendSubnet1]
+      AvailabilityZone: !Ref AvailabilityZone1
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-FrontendSubnet1
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  FrontendSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, FrontendSubnet2]
+      AvailabilityZone: !Ref AvailabilityZone2
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-FrontendSubnet2
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  FrontendSubnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, FrontendSubnet3]
+      AvailabilityZone: !Ref AvailabilityZone3
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-FrontendSubnet3
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  EngineSubnet1:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, EngineSubnet1]
+      AvailabilityZone: !Ref AvailabilityZone1
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-EngineSubnet3
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  EngineSubnet2:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, EngineSubnet2]
+      AvailabilityZone: !Ref AvailabilityZone2
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-EngineSubnet2
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  EngineSubnet3:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap [CidrBlock, !Ref StageName, EngineSubnet3]
+      AvailabilityZone: !Ref AvailabilityZone3
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-EngineSubnet3
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  InternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-InternetGateway
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  AttachGateway:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicRouteTableInternetGateway:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-InternetGateway
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  PublicRouteTableNatGateway:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-NATGateway
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  PublicRouteTableNatGateway2:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-NATGateway2
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  RouteNG:
+    Type: "AWS::EC2::Route"
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTableNatGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway1
+  RouteNG2:
+    Type: "AWS::EC2::Route"
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTableNatGateway2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NATGateway2
+  RouteIG:
+    Type: "AWS::EC2::Route"
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTableInternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  EIP:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-EIP-NAT-Proxy
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  NATGateway1:
+    DependsOn: AttachGateway
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt
+        - EIP
+        - AllocationId
+      SubnetId: !Ref Subnet1 
+      Tags:
+        - Key: Name
+          Value: !Join
+            - ""
+            - - !Ref Environment
+              - "-NATGateway-1"
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  EIP2:
+    Type: "AWS::EC2::EIP"
+    Properties:
+      Domain: VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-EIP-NAT-Proxy-B
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  NATGateway2:
+    DependsOn: AttachGateway
+    Type: "AWS::EC2::NatGateway"
+    Properties:
+      AllocationId: !GetAtt
+        - EIP2
+        - AllocationId
+      SubnetId: !Ref Subnet2 
+      Tags:
+        - Key: Name
+          Value: !Join
+            - ""
+            - - !Ref Environment
+              - "-NATGateway-2"
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  SubnetPublicRouteTableAssociation1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref Subnet1
+      RouteTableId: !Ref PublicRouteTableInternetGateway
+  SubnetPublicRouteTableAssociation2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref Subnet2
+      RouteTableId: !Ref PublicRouteTableInternetGateway
+  SubnetPublicRouteTableAssociation3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref Subnet3
+      RouteTableId: !Ref PublicRouteTableInternetGateway
+  SubnetPrivateRouteTableAssociationSLS1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref SLSSubnet1
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SubnetPrivateRouteTableAssociationSLS2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref SLSSubnet2
+      RouteTableId: !Ref PublicRouteTableNatGateway2
+  SubnetPrivateRouteTableAssociationSLS3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref SLSSubnet3
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SubnetRouteTableAssociationFrontend1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref FrontendSubnet1
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SubnetRouteTableAssociationFrontend2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref FrontendSubnet2
+      RouteTableId: !Ref PublicRouteTableNatGateway2
+  SubnetRouteTableAssociationFrontend3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref FrontendSubnet3
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SubnetRouteTableAssociationEngine1:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref EngineSubnet1
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SubnetRouteTableAssociationEngine2:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref EngineSubnet2
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SubnetRouteTableAssociationEngine3:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref EngineSubnet3
+      RouteTableId: !Ref PublicRouteTableNatGateway
+  SLSSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+          Description: Loqus Ssh
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-SLSSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  JumpBoxSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: JumpBox Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 195.158.91.22/32
+          Description: SSH from Loqus VPN
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 108.128.19.87/32
+          Description: SSH from Loqus VPN AWS DEV acc
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 193.110.155.77/32
+          Description: SSH from Loqus VPN 
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-JumpBoxSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}  
+  FrontendSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 192.168.0.0/19
+          Description: HTTP
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 192.168.0.0/19
+          Description: SSH from Internal
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 192.168.11.0/24
+          Description: Redis frontends-A
+        - IpProtocol: tcp
+          FromPort: 26379
+          ToPort: 26379
+          CidrIp: 192.168.11.0/24
+          Description: Redis-Sentinel frontends-A
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 192.168.12.0/24
+          Description: Redis frontends-B
+        - IpProtocol: tcp
+          FromPort: 26379
+          ToPort: 26379
+          CidrIp: 192.168.12.0/24
+          Description: Redis-Sentinel frontends-B
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 192.168.13.0/24
+          Description: Redis frontends-C
+        - IpProtocol: tcp
+          FromPort: 26379
+          ToPort: 26379
+          CidrIp: 192.168.13.0/24
+          Description: Redis-Sentinel frontends-C
+        - IpProtocol: tcp
+          FromPort: 4670
+          ToPort: 4670
+          CidrIp: 192.168.0.0/19
+          Description: SSH from Internal
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-FrontendSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  DispatchSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 192.168.0.0/19
+          Description: HTTP
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 192.168.0.0/19
+          Description: SSH from Internal
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 192.168.11.0/24
+          Description: Redis Dispatch-A
+        - IpProtocol: tcp
+          FromPort: 26379
+          ToPort: 26379
+          CidrIp: 192.168.11.0/24
+          Description: Redis-Sentinel Dispatch-A
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 192.168.12.0/24
+          Description: Redis Dispatch-B
+        - IpProtocol: tcp
+          FromPort: 26379
+          ToPort: 26379
+          CidrIp: 192.168.12.0/24
+          Description: Redis-Sentinel Dispatch-B
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 192.168.13.0/24
+          Description: Redis Dispatch-C
+        - IpProtocol: tcp
+          FromPort: 26379
+          ToPort: 26379
+          CidrIp: 192.168.13.0/24
+          Description: Redis-Sentinel Dispatch-C
+        - IpProtocol: tcp
+          FromPort: 4670
+          ToPort: 4670
+          CidrIp: 192.168.0.0/19
+          Description: SSH from Internal
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-DispatchSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  OTSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 192.168.0.0/19
+          Description: HTTP
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 192.168.0.0/19
+          Description: SSH from Internal
+        - IpProtocol: tcp
+          FromPort: 4670
+          ToPort: 4670
+          CidrIp: 192.168.0.0/19
+          Description: SSH from Internal
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-OTSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  EngineSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: Security group for a instance which client application is running
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 192.168.0.0/19
+          Description: SSH from VPC
+        - IpProtocol: tcp
+          FromPort: 8500
+          ToPort: 8599
+          CidrIp: 192.168.0.0/19
+          Description: Engine access from VPC
+        - IpProtocol: tcp
+          FromPort: 4670
+          ToPort: 4670
+          CidrIp: 192.168.0.0/19
+          Description: Admin Feeder API
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-EngineSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  FrontendLoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Internet facing LoadBalancer security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 195.158.91.22/32
+          Description: HTTP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 195.158.91.22/32
+          Description: HTTPS
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 35.177.142.124/32
+          Description: Relay from PreProd V1
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 108.128.19.87/32
+          Description: HTTP - LOQUS AWS VPN4
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 195.171.26.0/24
+          Description: DCG Network
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 91.216.183.0/24
+          Description: DCG Network
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 194.88.74.0/24
+          Description: DCG Network
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 82.132.222.140/32
+          Description: DCG Network
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 164.38.148.100/32
+          Description: LDO Feed
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 164.38.133.0/24
+          Description: DCG-VPN
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 164.38.150.4/32
+          Description: Sheffield
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 45.8.102.66/32
+          Description: Peak Corporate
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 164.38.33.33/32
+          Description: DCG VPN
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-LoadBalancerFrontendSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  DispatchLoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Internet facing LoadBalancer security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 173.245.48.0/20
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 103.21.244.0/22
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 103.22.200.0/22
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 103.31.4.0/22
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 141.101.64.0/18
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 108.162.192.0/18
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 190.93.240.0/20
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 188.114.96.0/20
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 197.234.240.0/22
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 198.41.128.0/17
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 162.158.0.0/15
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 104.16.0.0/13
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 104.24.0.0/14
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 172.64.0.0/13
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 131.0.72.0/22
+          Description: Cloudflare IP		
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-LoadBalancerDispatchSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  OTLoadBalancerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Internet facing LoadBalancer Order Tracking security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 173.245.48.0/20
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 103.21.244.0/22
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 103.22.200.0/22
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 103.31.4.0/22
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 141.101.64.0/18
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 108.162.192.0/18
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 190.93.240.0/20
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 188.114.96.0/20
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 197.234.240.0/22
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 198.41.128.0/17
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 162.158.0.0/15
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 104.16.0.0/13
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 104.24.0.0/14
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 172.64.0.0/13
+          Description: Cloudflare IP
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 131.0.72.0/22
+          Description: Cloudflare IP		
+      Tags:
+        - Key: Name
+          Value: !Sub ${Environment}-${StageName}-LoadBalancerOTSecurityGroup
+        - Key: Environment
+          Value: !Sub ${Environment}-${StageName}
+  ParameterOne:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${Environment}/${StageName}/sls/security-group-id
+      Type: String
+      Value: !Ref SLSSecurityGroup
+      Description: SLSSecurityGroup
+  ParameterTwo:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /${Environment}/${StageName}/sls/subnet-ids
+      Type: String
+      Value: !Join
+      - ","
+      - - !Ref "SLSSubnet1"
+        - !Ref "SLSSubnet2"
+        - !Ref "SLSSubnet3" 
+Outputs:
+  FrontendSecurityGroup:
+    Value: !Ref FrontendSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-FrontendSecurityID
+  DisptachSecurityGroup:
+    Value: !Ref DispatchSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-DispatchSecurityID
+  OTSecurityGroup:
+    Value: !Ref OTSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-OTSecurityID
+  EngineSecurityGroup:
+    Value: !Ref EngineSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-EngineSecurityID
+  JumpSecurityGroup:
+    Value: !Ref JumpBoxSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-JumpBoxSecurityID
+  SLSSecurityGroup:
+    Value: !Ref SLSSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-SLSSecurityID
+  Subnet1:
+   Value: !Ref Subnet1
+   Export:
+      Name: !Sub ${AWS::StackName}-Subnet1ID
+  Subnet2:
+   Value: !Ref Subnet2
+   Export:
+      Name: !Sub ${AWS::StackName}-Subnet2ID
+  Subnet3:
+   Value: !Ref Subnet3
+   Export:
+      Name: !Sub ${AWS::StackName}-Subnet3ID
+  FrontendSubnet1:
+   Value: !Ref FrontendSubnet1
+   Export:
+      Name: !Sub ${AWS::StackName}-FrontendSubnet1ID
+  FrontendSubnet2:
+   Value: !Ref FrontendSubnet2
+   Export:
+      Name: !Sub ${AWS::StackName}-FrontendSubnet2ID
+  FrontendSubnet3:
+   Value: !Ref FrontendSubnet3
+   Export:
+      Name: !Sub ${AWS::StackName}-FrontendSubnet3ID
+  EngineSubnet1:
+   Value: !Ref EngineSubnet1
+   Export:
+      Name: !Sub ${AWS::StackName}-EngineSubnet1ID
+  EngineSubnet2:
+   Value: !Ref EngineSubnet2
+   Export:
+      Name: !Sub ${AWS::StackName}-EngineSubnet2ID
+  EngineSubnet3:
+   Value: !Ref EngineSubnet3
+   Export:
+      Name: !Sub ${AWS::StackName}-EngineSubnet3ID
+  SLSSubnets:
+    Value: !Join
+      - ","
+      - - !Ref "SLSSubnet1"
+        - !Ref "SLSSubnet2"
+        - !Ref "SLSSubnet3"
+
+    Export:
+      Name: !Sub ${AWS::StackName}-SLSSubnetIDs
+  FrontendLoadBalancerSecurityGroup:
+    Value: !Ref FrontendLoadBalancerSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-FrontendLoadBalancerSecurityGroupID
+  DispatchLoadBalancerSecurityGroup:
+    Value: !Ref DispatchLoadBalancerSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-DispatchLoadBalancerSecurityGroupID
+  OTLoadBalancerSecurityGroup:
+    Value: !Ref OTLoadBalancerSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-OTLoadBalancerSecurityGroupID
+  VPC:
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}-VPC
