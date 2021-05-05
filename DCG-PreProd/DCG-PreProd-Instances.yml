@@ -1,0 +1,1057 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Instance Creation
+Mappings:
+  Constants:
+    AMI:
+      DefaultAMIId: ami-0669c90fcbe689e38
+      JumpBox: ami-08e7e8f315fde5407
+      Frontend1: ami-0438289ce24870d0e
+      OT: ami-0438289ce24870d0e
+      RoutingServerAMI: ami-072b7316d7c23bc79
+      Dispatch:  ami-0438289ce24870d0e
+    Tags:
+      environment: none
+Parameters:
+  BaseStackName:
+    Type: String
+    Default: env-Stage
+    Description: Parent Stack Name.
+  FrontendRoutingInstanceType:
+    Type: String
+    Default: m5.xlarge
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+    Description: Enter the instance type for the application server. Default is t2.medium.
+  OTInstanceType:
+    Type: String
+    Default: t2.small
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+    Description: Enter the instance type for the application server. Default is t2.medium.
+  EngineInstanceType:
+    Type: String
+    Default: m5.large
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+    Description: Enter the instance type for the application server. Default is t2.medium.
+  DispatchInstanceType:
+    Type: String
+    Default: m5.large
+    AllowedValues:
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.large
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m4.large
+      - m4.xlarge
+      - m5.large
+      - m5.xlarge
+    Description: Enter the instance type for the application server. Default is t2.medium.
+  Environment:
+    Description: Enter the Environment
+    Type: String
+    ConstraintDescription: Must be a valid string.
+  PEMFileName:
+    Description: Enter the PEM file name
+    Type: String
+    Default: UAT
+    ConstraintDescription: Must be a valid string.
+Resources:
+  JumpBox:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 50
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - JumpBox
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: true
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-JumpBoxSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-Subnet1ID"
+          PrivateIpAddress: 192.168.1.10
+      InstanceType: t2.micro
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-JumpBox-1-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EIP:
+    Type: 'AWS::EC2::EIP'
+    Properties:
+      Domain: VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-EIP-JumpBox
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  EIPAssoc:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref 'JumpBox'
+      EIP: !Ref 'EIP'
+  FrontendLoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet1ID"
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet2ID"
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet3ID"
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '50'
+      SecurityGroups:
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-FrontendLoadBalancerSecurityGroupID"
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-FrontendLoadBalancer
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  ListenerFrontendDefault:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendTargetGroup
+      LoadBalancerArn: !Ref FrontendLoadBalancer
+      Port: '80'
+      Protocol: HTTP
+  ListenerFrontendRule1:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendTargetGroup
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values: 
+              - /route/
+      ListenerArn: !Ref ListenerFrontendDefault
+      Priority: 1
+  ListenerFrontendRule2:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref DispatchTargetGroup
+      Conditions:
+        - Field: path-pattern
+          PathPatternConfig:
+            Values: 
+              - /dispatch/
+      ListenerArn: !Ref ListenerFrontendDefault
+      Priority: 2
+  FrontendTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub ${BaseStackName}-FrontendTargetGroup
+      HealthCheckPath: /route/intapi
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '20'
+        - Key: stickiness.enabled
+          Value: true
+      VpcId:
+        Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-VPC"
+      Targets:
+        - Id: !Ref FrontendInstance1
+          Port: 80
+        - Id: !Ref FrontendInstance2
+          Port: 80
+        - Id: !Ref FrontendInstance3
+          Port: 80
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-FrontendTargetGroup
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  FrontendInstance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - Frontend1
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-FrontendSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-FrontendSubnet1ID"
+          PrivateIpAddress: 192.168.11.10
+      InstanceType: !Ref FrontendRoutingInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Frontend-1-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  FrontendInstance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - Frontend1
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-FrontendSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-FrontendSubnet2ID"
+          PrivateIpAddress: 192.168.12.10
+      InstanceType: !Ref FrontendRoutingInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Frontend-2-B
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  FrontendInstance3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - Frontend1
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-FrontendSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-FrontendSubnet3ID"
+          PrivateIpAddress: 192.168.13.10
+      InstanceType: !Ref FrontendRoutingInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Frontend-3-C
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  DispatchLoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet1ID"
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet2ID"
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet3ID"
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '50'
+      SecurityGroups:
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-DispatchLoadBalancerSecurityGroupID"
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-DispatchLoadBalancer
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  HTTP80DispatchListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MobileTargetGroup
+      LoadBalancerArn: !Ref DispatchLoadBalancer
+      Port: '80'
+      Protocol: HTTP
+  DispatchTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub ${BaseStackName}-DispatchTargetGroup
+      HealthCheckPath: /dispatch/disapi
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '20'
+        - Key: stickiness.enabled
+          Value: true
+      VpcId:
+        Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-VPC"
+      Targets:
+        - Id: !Ref DispatchInstance1
+          Port: 80
+        - Id: !Ref DispatchInstance2
+          Port: 80
+        - Id: !Ref DispatchInstance3
+          Port: 80
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-DispatchTargetGroup
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  MobileTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub ${BaseStackName}-MobileTargetGroup
+      HealthCheckPath: /dispatch/mobapi
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '20'
+        - Key: stickiness.enabled
+          Value: true
+      VpcId:
+        Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-VPC"
+      Targets:
+        - Id: !Ref DispatchInstance1
+          Port: 80
+        - Id: !Ref DispatchInstance2
+          Port: 80
+        - Id: !Ref DispatchInstance3
+          Port: 80
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-MobileTargetGroup
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  DispatchInstance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - Dispatch
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-DispatchSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-FrontendSubnet1ID"
+          PrivateIpAddress: 192.168.11.12
+      InstanceType: !Ref DispatchInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Dispatch-1-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  DispatchInstance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - Dispatch
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-DispatchSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-FrontendSubnet2ID"
+          PrivateIpAddress: 192.168.12.12
+      InstanceType: !Ref DispatchInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Dispatch-2-B
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  DispatchInstance3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - Dispatch
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-DispatchSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-FrontendSubnet3ID"
+          PrivateIpAddress: 192.168.13.12
+      InstanceType: !Ref DispatchInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Dispatch-3-C
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  OTInstance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - OT
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-OTSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-FrontendSubnet1ID"
+          PrivateIpAddress: 192.168.11.21
+      InstanceType: !Ref OTInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-OrderTracking-1-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  OTInstance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - OT
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-OTSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-FrontendSubnet2ID"
+          PrivateIpAddress: 192.168.12.21
+      InstanceType: !Ref OTInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-OrderTracking-2-B
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  OTLoadBalancer:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Scheme: internet-facing
+      Subnets:
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet1ID"
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet2ID"
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-Subnet3ID"
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '50'
+      SecurityGroups:
+        - Fn::ImportValue:
+            Fn::Sub: "${BaseStackName}-OTLoadBalancerSecurityGroupID"
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-OTdLoadBalancer
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  OTTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      Name: !Sub ${BaseStackName}-OTTargetGroup
+      HealthCheckPath: /OT/order-tracking
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '20'
+        - Key: stickiness.enabled
+          Value: false
+      VpcId:
+        Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-VPC"
+      Targets:
+        - Id: !Ref OTInstance1
+          Port: 80
+        - Id: !Ref OTInstance2
+          Port: 80
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-OTTargetGroup
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+  EngineInstance1:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet1ID"
+          PrivateIpAddress: 192.168.14.11
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-1-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet1ID"
+          PrivateIpAddress: 192.168.14.12
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-2-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance3:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet1ID"
+          PrivateIpAddress: 192.168.14.13
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-3-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance4:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet1ID"
+          PrivateIpAddress: 192.168.14.14
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-4-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance5:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet2ID"
+          PrivateIpAddress: 192.168.15.11
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-5-B
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance6:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet2ID"
+          PrivateIpAddress: 192.168.15.12
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-6-B
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance7:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet2ID"
+          PrivateIpAddress: 192.168.15.13
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-7-B
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance8:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet2ID"
+          PrivateIpAddress: 192.168.15.14
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-8-B
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance9:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet3ID"
+          PrivateIpAddress: 192.168.16.11
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-9-C
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance10:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet3ID"
+          PrivateIpAddress: 192.168.16.12
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-10-C
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance11:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet3ID"
+          PrivateIpAddress: 192.168.16.13
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-11-C
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance12:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet3ID"
+          PrivateIpAddress: 192.168.16.14
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-12-C
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
+  EngineInstance13:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 150
+            VolumeType: gp2
+            Encrypted: 'true'
+      ImageId: !FindInMap 
+        - Constants
+        - AMI
+        - RoutingServerAMI
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          AssociatePublicIpAddress: false
+          DeleteOnTermination: 'true'
+          GroupSet:
+            - Fn::ImportValue:
+                Fn::Sub: "${BaseStackName}-EngineSecurityID"
+          SubnetId:
+            Fn::ImportValue:
+              Fn::Sub: "${BaseStackName}-EngineSubnet1ID"
+          PrivateIpAddress: 192.168.14.15
+      InstanceType: !Ref EngineInstanceType
+      KeyName: !Ref PEMFileName
+      Tags:
+        - Key: Name
+          Value: !Sub ${BaseStackName}-Engine-13-A
+        - Key: Environment
+          Value: !Sub ${BaseStackName}
+        - Key:  Lifecycle
+          Value: Daily
